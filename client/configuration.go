@@ -14,7 +14,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
+	"os"
 )
 
 // contextKeys are used to identify the type of value in the context.
@@ -82,6 +84,18 @@ type Configuration struct {
 	HTTPClient       *http.Client
 }
 
+func getKmsUrl() string {
+	u, err := url.Parse("https://kms.apigw.gov-ntruss.com/keys/v2")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed parse kms url\n")
+		panic(err)
+	}
+	if overridedValue := os.Getenv("NCLOUD_KMS_API_GW"); overridedValue != "" {
+		u.Host = overridedValue
+	}
+	return u.String()
+}
+
 // NewConfiguration returns a new Configuration object
 func NewConfiguration() *Configuration {
 	cfg := &Configuration{
@@ -97,13 +111,13 @@ func NewConfiguration() *Configuration {
 		OperationServers: map[string]ServerConfigurations{
 			"KmsAPIService.Decrypt": {
 				{
-					URL: "https://kms.apigw.gov-ntruss.com/keys/v2",
+					URL: getKmsUrl(),
 					Description: "No description provided",
 				},
 			},
 			"KmsAPIService.Encrypt": {
 				{
-					URL: "https://kms.apigw.gov-ntruss.com/keys/v2",
+					URL: getKmsUrl(),
 					Description: "No description provided",
 				},
 			},

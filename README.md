@@ -9,7 +9,7 @@ docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli:v7.6.0 gener
     --additional-properties=withGoMod=false \
     -o /local/client
 ```
-2. 생성된 코드 중 `client.go` 파일에 Naver Cloud 인증을 위해서 아래의 코드를 추가한다.
+2. 생성된 코드 중 `client.go` 파일에 Naver Cloud 인증을 위해서 아래의 코드를 추가
 
 의존성 패키지 추가
 
@@ -39,5 +39,57 @@ if auth := credentials.LoadCredentials(credentials.DefaultCredentialsChain()); a
   localVarRequest.Header.Add("x-ncp-apigw-timestamp", timestamp)
   localVarRequest.Header.Add("x-ncp-iam-access-key", auth.AccessKey())
   localVarRequest.Header.Add("x-ncp-apigw-signature-v1", signature)
+}
+```
+
+3. 생성된 코드 중 `configuration.go` 파일에 NCLOUD_KMS_API_GW 환경변수 처리를 추가
+
+네이버 공공 클라우드 아닌 경우에는 아래와 같이 환경변수를 셋팅.
+
+```bash
+export NCLOUD_KMS_API_GW=kms.apigw.ntruss.com
+```
+
+```go
+func getKmsUrl() string {
+	u, err := url.Parse("https://kms.apigw.gov-ntruss.com/keys/v2")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed parse kms url\n")
+		panic(err)
+	}
+	if overridedValue := os.Getenv("NCLOUD_KMS_API_GW"); overridedValue != "" {
+		u.Host = overridedValue
+	}
+	return u.String()
+}
+
+// NewConfiguration returns a new Configuration object
+func NewConfiguration() *Configuration {
+	cfg := &Configuration{
+		DefaultHeader:    make(map[string]string),
+		UserAgent:        "OpenAPI-Generator/1.0.0/go",
+		Debug:            false,
+		Servers:          ServerConfigurations{
+			{
+				URL: "",
+				Description: "No description provided",
+			},
+		},
+		OperationServers: map[string]ServerConfigurations{
+			"KmsAPIService.Decrypt": {
+				{
+					URL: getKmsUrl(),
+					Description: "No description provided",
+				},
+			},
+			"KmsAPIService.Encrypt": {
+				{
+					URL: getKmsUrl(),
+					Description: "No description provided",
+				},
+			},
+		},
+	}
+	return cfg
 }
 ```
