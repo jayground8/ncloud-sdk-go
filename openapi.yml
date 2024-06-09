@@ -1,0 +1,93 @@
+openapi: "3.1.0"
+info:
+  version: 1.0.0
+  title: ncloud
+paths:
+  /{keyTag}/encrypt:
+    description: KMS encrypt
+    servers:
+      - url: https://kms.apigw.gov-ntruss.com/keys/v2
+    post:
+      summary: KMS encrypt
+      operationId: encrypt
+      tags: 
+        - kms
+      parameters:
+        - in: path
+          name: keyTag
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                plaintext:
+                  type: string
+                context:
+                  type: string
+              required:
+                - plaintext
+      responses:
+        "200":
+          description: 정상응답
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  msg:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      ciphertext:
+                        type: string
+  /{keyTag}/decrypt:
+    description: KMS decrypt
+    servers:
+      - url: https://kms.apigw.gov-ntruss.com/keys/v2
+    post:
+      summary: KMS decrypt
+      operationId: decrypt
+      tags: 
+        - kms
+      parameters:
+        - in: path
+          name: keyTag
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ciphertext:
+                  type: string
+                context:
+                  type: string
+              required:
+                - ciphertext
+      responses:
+        "200":
+          description: 정상응답
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  msg:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      plaintext:
+                        type: string

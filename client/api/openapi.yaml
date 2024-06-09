@@ -1,0 +1,121 @@
+openapi: 3.1.0
+info:
+  title: ncloud
+  version: 1.0.0
+servers:
+- url: /
+paths:
+  /{keyTag}/encrypt:
+    description: KMS encrypt
+    post:
+      operationId: encrypt
+      parameters:
+      - explode: false
+        in: path
+        name: keyTag
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/encrypt_request'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/encrypt_200_response'
+          description: 정상응답
+      summary: KMS encrypt
+      tags:
+      - kms
+    servers:
+    - url: https://kms.apigw.gov-ntruss.com/keys/v2
+  /{keyTag}/decrypt:
+    description: KMS decrypt
+    post:
+      operationId: decrypt
+      parameters:
+      - explode: false
+        in: path
+        name: keyTag
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/decrypt_request'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/decrypt_200_response'
+          description: 정상응답
+      summary: KMS decrypt
+      tags:
+      - kms
+    servers:
+    - url: https://kms.apigw.gov-ntruss.com/keys/v2
+components:
+  schemas:
+    decrypt_200_response_data:
+      example:
+        plaintext: plaintext
+      properties:
+        plaintext:
+          type: string
+    decrypt_200_response:
+      example:
+        msg: msg
+        code: code
+        data:
+          plaintext: plaintext
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          $ref: '#/components/schemas/decrypt_200_response_data'
+    decrypt_request:
+      properties:
+        ciphertext:
+          type: string
+        context:
+          type: string
+      required:
+      - ciphertext
+    encrypt_200_response_data:
+      example:
+        ciphertext: ciphertext
+      properties:
+        ciphertext:
+          type: string
+    encrypt_request:
+      properties:
+        plaintext:
+          type: string
+        context:
+          type: string
+      required:
+      - plaintext
+    encrypt_200_response:
+      example:
+        msg: msg
+        code: code
+        data:
+          ciphertext: ciphertext
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          $ref: '#/components/schemas/encrypt_200_response_data'
