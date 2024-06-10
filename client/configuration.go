@@ -17,6 +17,8 @@ import (
 	"net/url"
 	"strings"
 	"os"
+
+	ncloud "github.com/jayground8/ncloud-sdk-go/ncloud/credentials"
 )
 
 // contextKeys are used to identify the type of value in the context.
@@ -82,6 +84,7 @@ type Configuration struct {
 	Servers          ServerConfigurations
 	OperationServers map[string]ServerConfigurations
 	HTTPClient       *http.Client
+	Credentials		 *ncloud.Credentials
 }
 
 func getKmsUrl() string {
@@ -97,7 +100,7 @@ func getKmsUrl() string {
 }
 
 // NewConfiguration returns a new Configuration object
-func NewConfiguration() *Configuration {
+func NewConfiguration(credentials *ncloud.Credentials) *Configuration {
 	cfg := &Configuration{
 		DefaultHeader:    make(map[string]string),
 		UserAgent:        "OpenAPI-Generator/1.0.0/go",
@@ -122,7 +125,13 @@ func NewConfiguration() *Configuration {
 				},
 			},
 		},
+		Credentials: credentials,
 	}
+
+	if !cfg.Credentials.Valid() {
+		cfg.Credentials = ncloud.LoadCredentials(ncloud.DefaultCredentialsChain())
+	}
+
 	return cfg
 }
 

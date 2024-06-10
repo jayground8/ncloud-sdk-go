@@ -33,7 +33,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/jayground8/ncloud-sdk-go/ncloud/credentials"
 	"github.com/jayground8/ncloud-sdk-go/hmac"
 )
 
@@ -412,16 +411,14 @@ func (c *APIClient) prepareRequest(
 		queryString = "?" + url.RawQuery
 	}
 
-	if auth := credentials.LoadCredentials(credentials.DefaultCredentialsChain()); auth != nil {
-		timestamp := strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)
-		signer := hmac.NewSigner(auth.SecretKey(), crypto.SHA256)
-		signature, _ := signer.Sign(method, path+queryString, auth.AccessKey(), timestamp)
+	timestamp := strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)
+	signer := hmac.NewSigner(c.cfg.Credentials.SecretKey(), crypto.SHA256)
+	signature, _ := signer.Sign(method, path+queryString, c.cfg.Credentials.AccessKey(), timestamp)
 
-		localVarRequest.Header.Add("x-ncp-apigw-timestamp", timestamp)
-		localVarRequest.Header.Add("x-ncp-iam-access-key", auth.AccessKey())
-		localVarRequest.Header.Add("x-ncp-apigw-signature-v1", signature)
-	}
-
+	localVarRequest.Header.Add("x-ncp-apigw-timestamp", timestamp)
+	localVarRequest.Header.Add("x-ncp-iam-access-key", c.cfg.Credentials.AccessKey())
+	localVarRequest.Header.Add("x-ncp-apigw-signature-v1", signature)
+		
 	if ctx != nil {
 		// add context to the request
 		localVarRequest = localVarRequest.WithContext(ctx)

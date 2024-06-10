@@ -18,7 +18,6 @@ import (
 	"crypto"
 	...생략
 
-	"github.com/jayground8/ncloud-sdk-go/ncloud/credentials"
 	"github.com/jayground8/ncloud-sdk-go/hmac"
 )
 ```
@@ -28,18 +27,16 @@ prepareRequest method에 아래 코드를 추가
 ```go
 queryString := ""
 if len(url.RawQuery) > 0 {
-  queryString = "?" + url.RawQuery
+	queryString = "?" + url.RawQuery
 }
 
-if auth := credentials.LoadCredentials(credentials.DefaultCredentialsChain()); auth != nil {
-  timestamp := strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)
-  signer := hmac.NewSigner(auth.SecretKey(), crypto.SHA256)
-  signature, _ := signer.Sign(method, path+queryString, auth.AccessKey(), timestamp)
+timestamp := strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)
+signer := hmac.NewSigner(c.cfg.Credentials.SecretKey(), crypto.SHA256)
+signature, _ := signer.Sign(method, path+queryString, c.cfg.Credentials.AccessKey(), timestamp)
 
-  localVarRequest.Header.Add("x-ncp-apigw-timestamp", timestamp)
-  localVarRequest.Header.Add("x-ncp-iam-access-key", auth.AccessKey())
-  localVarRequest.Header.Add("x-ncp-apigw-signature-v1", signature)
-}
+localVarRequest.Header.Add("x-ncp-apigw-timestamp", timestamp)
+localVarRequest.Header.Add("x-ncp-iam-access-key", c.cfg.Credentials.AccessKey())
+localVarRequest.Header.Add("x-ncp-apigw-signature-v1", signature)
 ```
 
 3. 생성된 코드 중 `configuration.go` 파일에 NCLOUD_KMS_API_GW 환경변수 처리를 추가
@@ -49,6 +46,17 @@ if auth := credentials.LoadCredentials(credentials.DefaultCredentialsChain()); a
 ```bash
 export NCLOUD_KMS_API_GW=kms.apigw.ntruss.com
 ```
+
+의존성 패키지 추가
+
+```go
+import (
+	...생략
+	ncloud "github.com/jayground8/ncloud-sdk-go/ncloud/credentials"
+)
+```
+
+코드 추가 & 변경
 
 ```go
 func getKmsUrl() string {
@@ -64,7 +72,7 @@ func getKmsUrl() string {
 }
 
 // NewConfiguration returns a new Configuration object
-func NewConfiguration() *Configuration {
+func NewConfiguration(credentials *ncloud.Credentials) *Configuration {
 	cfg := &Configuration{
 		DefaultHeader:    make(map[string]string),
 		UserAgent:        "OpenAPI-Generator/1.0.0/go",
@@ -89,7 +97,13 @@ func NewConfiguration() *Configuration {
 				},
 			},
 		},
+		Credentials: credentials,
 	}
+
+	if !cfg.Credentials.Valid() {
+		cfg.Credentials = ncloud.LoadCredentials(ncloud.DefaultCredentialsChain())
+	}
+
 	return cfg
 }
 ```
